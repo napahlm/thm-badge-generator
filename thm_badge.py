@@ -24,6 +24,8 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+import random
+import time
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
@@ -33,7 +35,8 @@ THEMES_PATH = HERE / "themes.json"
 FIRE_SHEET = HERE / "sprites" / "fire.png"   # 4x5 grid of 32x32 frames, row-major
 
 API_URL = "https://tryhackme.com/api/v2/public-profile?username={username}"
-USER_AGENT = "thm-badge-generator/1.0 (+https://github.com/napahlm/thm-badge-generator)"
+USER_AGENT = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+              "Chrome/129.0 Safari/537.36 thm-badge-generator/1.0 (+https://github.com/napahlm/thm-badge-generator)")
 
 # Departure Mono is pixel-perfect at multiples of 11px.
 FONT_PX = 11
@@ -55,6 +58,8 @@ LEVELS = {
     16: ("0x10", "Sage"), 17: ("0x11", "Vanguard"), 18: ("0x12", "Shogun"),
     19: ("0x13", "Ascended"), 20: ("0x14", "Mythic"), 21: ("0x15", "Grandmaster"),
 }
+
+RETRY_STATUSES = {429, 500, 502, 503, 504}
 
 @dataclass
 class Stats:
@@ -99,10 +104,37 @@ class Stats:
 # Fetching
 # ---------------------------------------------------------------------------
 
-def http_get(url: str, timeout: int = 20) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.read()
+def http_get(url: str, timeout: int = 20, attempts: int = 5) -> bytes:
+    """GET with exponential backoff. TryHackMe sits behind Cloudflare and
+    rate-limits per IP; GitHub's shared runner IPs trip it regularly, so a
+    single 429 is not a failure, just a wait."""
+    req = urllib.request.Request(url, headers={
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json, image/*;q=0.9, */*;q=0.8",
+        "Accept-Language": "en",
+    })
+    delay = 5.0
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code not in RETRY_STATUSES or attempt == attempts:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            wait = float(retry_after) if retry_after and retry_after.isdigit() else delay
+            wait += random.uniform(0, 3)
+            print(f"warning: HTTP {exc.code} from {url.split('?')[0]}, retry {attempt}/{attempts - 1} in {wait:.0f}s",
+                  file=sys.stderr)
+            time.sleep(wait)
+            delay = min(delay * 3, 120)
+        except (urllib.error.URLError, TimeoutError) as exc:
+            if attempt == attempts:
+                raise
+            print(f"warning: {exc}, retry {attempt}/{attempts - 1} in {delay:.0f}s", file=sys.stderr)
+            time.sleep(delay)
+            delay = min(delay * 3, 120)
+    raise RuntimeError("unreachable")
 
 
 def fetch_stats(username: str) -> dict:
@@ -511,8 +543,15 @@ def main(argv: list[str] | None = None) -> int:
     args.out.mkdir(parents=True, exist_ok=True)
 
     if args.username:
-        data = fetch_stats(args.username)
-        (args.out / "stats.json").write_text(json.dumps(data, indent=2) + "\n")
+        cache = args.out / "stats.json"
+        try:
+            data = fetch_stats(args.username)
+            cache.write_text(json.dumps(data, indent=2) + "\n")
+        except Exception as exc:
+            if not cache.exists():
+                raise
+            print(f"warning: fetch failed ({exc}); rendering from cached {cache}", file=sys.stderr)
+            data = json.loads(cache.read_text()).get("data", json.loads(cache.read_text()))
     else:
         data = json.loads(args.stats.read_text())
         data = data.get("data", data)

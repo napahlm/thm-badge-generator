@@ -12,7 +12,8 @@ Typical use:
     python thm_badge.py --username napahlm --all-themes --sheet
     python thm_badge.py --stats badges/stats.json --theme gameboy   # offline
 
-Only dependency: Pillow.
+Dependencies: Pillow. Optional: playwright (only used when tryhackme.com
+serves its Vercel browser challenge, which it does to GitHub-hosted runners).
 """
 from __future__ import annotations
 
@@ -104,65 +105,113 @@ class Stats:
 # Fetching
 # ---------------------------------------------------------------------------
 
-def http_get(url: str, timeout: int = 20, attempts: int = 4) -> bytes:
+CHALLENGE_MARKERS = ("Security Checkpoint", "_vcrcs", "Attention Required")
+
+
+class ChallengeError(RuntimeError):
+    """tryhackme.com answered with a JavaScript challenge page instead of data."""
+
+
+def looks_like_challenge(status: int, body: str) -> bool:
+    return status in (403, 429, 503) and any(m in body for m in CHALLENGE_MARKERS)
+
+
+def http_get(url: str, timeout: int = 20, attempts: int = 2) -> bytes:
+    """Plain GET with a short retry for transient 5xx/429. A Vercel/Cloudflare
+    challenge page is raised as ChallengeError at once: retrying cannot
+    solve it, only a browser can (see fetch_via_browser)."""
     headers = {
+        "User-Agent": USER_AGENT,
         "Accept": "application/json, image/*;q=0.9, */*;q=0.8",
         "Accept-Language": "en-GB,en;q=0.9",
         "Referer": "https://tryhackme.com/",
     }
-    try:
-        from curl_cffi import requests as cffi
-    except ImportError:
-        cffi = None
-        print("warning: curl_cffi not installed, using urllib (Cloudflare may reject its TLS fingerprint)", file=sys.stderr)
-
     delay = 5.0
-    last_body = ""
     for attempt in range(1, attempts + 1):
         try:
-            if cffi:
-                r = cffi.get(url, headers=headers, impersonate="chrome", timeout=timeout)
-                if r.status_code < 400:
-                    return r.content
-                code, last_body, hdrs = r.status_code, r.text[:300], dict(r.headers)
-            else:
-                req = urllib.request.Request(url, headers={**headers, "User-Agent": USER_AGENT})
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read()
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read()
         except urllib.error.HTTPError as exc:
             code, hdrs = exc.code, dict(exc.headers)
-            last_body = exc.read(300).decode("utf-8", "replace")
+            body = exc.read(400).decode("utf-8", "replace")
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            code, hdrs = 0, {}
-            last_body = str(exc)
+            code, hdrs, body = 0, {}, str(exc)
+        if looks_like_challenge(code, body):
+            raise ChallengeError(f"HTTP {code} from {url.split('?')[0]}: browser challenge served")
         if code not in RETRY_STATUSES or attempt == attempts:
-            cf = {k: v for k, v in hdrs.items() if k.lower() in ("cf-mitigated", "cf-ray", "server", "retry-after")}
-            raise RuntimeError(f"HTTP {code} from {url.split('?')[0]} after {attempt} attempts; {cf}; body: {last_body!r}")
+            info = {k: v for k, v in hdrs.items() if k.lower() in ("server", "retry-after", "cf-mitigated")}
+            raise RuntimeError(f"HTTP {code} from {url.split('?')[0]} after {attempt} attempts; {info}; body: {body!r}")
         wait = delay + random.uniform(0, 3)
         print(f"warning: HTTP {code}, retry {attempt}/{attempts - 1} in {wait:.0f}s", file=sys.stderr)
         time.sleep(wait)
-        delay = min(delay * 3, 120)
+        delay = min(delay * 3, 60)
+    raise RuntimeError("unreachable")
 
 
-def fetch_stats(username: str) -> dict:
-    """Fetch the public profile JSON. Raises on any failure so a broken
-    fetch never produces a broken badge."""
-    raw = http_get(API_URL.format(username=username))
-    payload = json.loads(raw)
-    if payload.get("status") != "success" or "data" not in payload:
-        raise RuntimeError(f"unexpected API response: {raw[:200]!r}")
-    data = payload["data"]
+def _check_schema(data: dict) -> dict:
     for key in ("username", "level", "totalPoints", "streak"):
         if key not in data:
             raise RuntimeError(f"API response missing '{key}', schema may have changed")
     return data
 
 
+def fetch_stats(username: str) -> dict:
+    """Fetch the public profile JSON directly. Raises ChallengeError when the
+    site wants a browser, any other failure as RuntimeError."""
+    raw = http_get(API_URL.format(username=username))
+    payload = json.loads(raw)
+    if payload.get("status") != "success" or "data" not in payload:
+        raise RuntimeError(f"unexpected API response: {raw[:200]!r}")
+    return _check_schema(payload["data"])
+
+
+def fetch_via_browser(username: str) -> tuple[dict, bytes | None]:
+    """Open the profile in headless Chromium so the challenge can solve
+    itself, then call the JSON API from inside that page (same origin, the
+    challenge cookie attached). Returns (stats data, avatar bytes or None)."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise RuntimeError("tryhackme.com served a browser challenge and playwright is not installed: "
+                           "pip install playwright && python -m playwright install --with-deps chromium")
+    api = API_URL.format(username=username)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        try:
+            ctx = browser.new_context(locale="en-GB", viewport={"width": 1280, "height": 800})
+            page = ctx.new_page()
+            page.goto(f"https://tryhackme.com/p/{username}", wait_until="domcontentloaded", timeout=60_000)
+            # The checkpoint page reloads itself once its cookie is set.
+            page.wait_for_function("!document.title.includes('Security Checkpoint')", timeout=60_000)
+            page.wait_for_timeout(1500)
+            res = page.evaluate(
+                """async (url) => {
+                     const r = await fetch(url, {credentials: 'include', headers: {'Accept': 'application/json'}});
+                     return {status: r.status, text: await r.text()};
+                   }""", api)
+            if res["status"] != 200:
+                raise RuntimeError(f"API returned {res['status']} inside the browser: {res['text'][:200]!r}")
+            payload = json.loads(res["text"])
+            if payload.get("status") != "success" or "data" not in payload:
+                raise RuntimeError(f"unexpected API response in browser: {res['text'][:200]!r}")
+            data = _check_schema(payload["data"])
+            avatar = None
+            if data.get("avatar"):
+                try:
+                    avatar = ctx.request.get(data["avatar"], timeout=30_000).body()
+                except Exception as exc:  # cosmetic, never fatal
+                    print(f"warning: avatar fetch in browser failed ({exc})", file=sys.stderr)
+        finally:
+            browser.close()
+    return data, avatar
+
+
 def fetch_avatar(url: str) -> Image.Image | None:
     try:
         return Image.open(io.BytesIO(http_get(url))).convert("RGBA")
     except Exception as exc:  # avatar is cosmetic, never fatal
-        print(f"warning: avatar fetch failed ({exc}), using fallback sprite", file=sys.stderr)
+        print(f"warning: avatar fetch failed ({exc}), rendering without avatar", file=sys.stderr)
         return None
 
 
@@ -549,16 +598,22 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.mkdir(parents=True, exist_ok=True)
 
+    avatar_bytes: bytes | None = None
     if args.username:
         cache = args.out / "stats.json"
         try:
-            data = fetch_stats(args.username)
+            try:
+                data = fetch_stats(args.username)
+            except ChallengeError as exc:
+                print(f"warning: {exc}; switching to headless browser", file=sys.stderr)
+                data, avatar_bytes = fetch_via_browser(args.username)
             cache.write_text(json.dumps(data, indent=2) + "\n")
         except Exception as exc:
             if not cache.exists():
                 raise
             print(f"warning: fetch failed ({exc}); rendering from cached {cache}", file=sys.stderr)
-            data = json.loads(cache.read_text()).get("data", json.loads(cache.read_text()))
+            data = json.loads(cache.read_text())
+            data = data.get("data", data)
     else:
         data = json.loads(args.stats.read_text())
         data = data.get("data", data)
@@ -567,7 +622,11 @@ def main(argv: list[str] | None = None) -> int:
     avatar = None
     if args.avatar_file:
         avatar = Image.open(args.avatar_file).convert("RGBA")
-    elif not args.no_avatar and stats.avatar_url:
+    elif args.no_avatar:
+        pass
+    elif avatar_bytes:
+        avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGBA")
+    elif stats.avatar_url:
         avatar = fetch_avatar(stats.avatar_url)
     fire = load_fire_frames()
     # static badge shows the fullest frame; the GIF/sheet loop through all of them

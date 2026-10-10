@@ -46,7 +46,9 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install --quiet pillow curl_cffi
+      run: |
+        pip install --quiet pillow playwright
+        python -m playwright install --with-deps chromium
 
     - name: Render badge
       shell: bash

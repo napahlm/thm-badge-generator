@@ -167,7 +167,7 @@ def fetch_stats(username: str) -> dict:
 
 
 def fetch_via_browser(username: str) -> tuple[dict, bytes | None]:
-    """Open the profile in headless Chromium so the challenge can solve
+    """Open the profile in headless Chrome so the challenge can solve
     itself, then call the JSON API from inside that page (same origin, the
     challenge cookie attached). Returns (stats data, avatar bytes or None)."""
     try:
@@ -177,14 +177,32 @@ def fetch_via_browser(username: str) -> tuple[dict, bytes | None]:
                            "pip install playwright && python -m playwright install --with-deps chromium")
     api = API_URL.format(username=username)
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        # GitHub's ubuntu runners ship Google Chrome; driving it instead of
+        # Playwright's bundled Chromium removes the obvious headless tells.
+        launch_args = ["--disable-blink-features=AutomationControlled"]
         try:
-            ctx = browser.new_context(locale="en-GB", viewport={"width": 1280, "height": 800})
+            browser = p.chromium.launch(headless=True, channel="chrome", args=launch_args)
+        except Exception:
+            browser = p.chromium.launch(headless=True, args=launch_args)
+        try:
+            ctx = browser.new_context(
+                locale="en-GB",
+                viewport={"width": 1280, "height": 800},
+                user_agent=("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/129.0.0.0 Safari/537.36"),
+            )
+            ctx.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined});")
             page = ctx.new_page()
             page.goto(f"https://tryhackme.com/p/{username}", wait_until="domcontentloaded", timeout=60_000)
             # The checkpoint page reloads itself once its cookie is set.
-            page.wait_for_function("!document.title.includes('Security Checkpoint')", timeout=60_000)
+            try:
+                page.wait_for_function("!document.title.includes('Security Checkpoint')", timeout=45_000)
+            except Exception:
+                body = page.evaluate("document.body ? document.body.innerText.slice(0, 600) : ''")
+                raise RuntimeError(
+                    f"challenge did not clear; url={page.url!r} title={page.title()!r} body={body!r}")
             page.wait_for_timeout(1500)
+
             res = page.evaluate(
                 """async (url) => {
                      const r = await fetch(url, {credentials: 'include', headers: {'Accept': 'application/json'}});
@@ -196,6 +214,7 @@ def fetch_via_browser(username: str) -> tuple[dict, bytes | None]:
             if payload.get("status") != "success" or "data" not in payload:
                 raise RuntimeError(f"unexpected API response in browser: {res['text'][:200]!r}")
             data = _check_schema(payload["data"])
+
             avatar = None
             if data.get("avatar"):
                 try:

@@ -1,0 +1,520 @@
+/* ==========================================================
+   GRIBBLE THEME SYSTEM — v2.0
+   ==========================================================
+   
+   VARIABLE NAMING CONVENTION (standardized):
+   
+   SURFACES
+   --g-bg            : App background
+   --g-surface       : Elevated panels, toolbars, sidebars
+   --g-surface-alt   : Secondary surface for nested panels, popovers
+   
+   TEXT
+   --g-text          : Primary text
+   --g-text-muted    : Secondary labels, hints, disabled
+   
+   BORDERS & STRUCTURE  
+   --g-border        : Dividers, panel edges, separators
+   --g-border-strong : Emphasized borders (active panels, focus rings)
+   
+   INTERACTIVE
+   --g-primary       : Primary interactive color (buttons, active states)
+   --g-primary-hover : Hover/pressed variant
+   --g-primary-text  : Text color ON primary-colored backgrounds
+   
+   ACCENT
+   --g-accent        : Secondary color (tags, highlights, secondary actions)
+   --g-accent-text   : Text color ON accent-colored backgrounds
+   
+   SEMANTIC STATUS
+   --g-success       : Saved, complete, connected
+   --g-warning       : Modified, caution, pending
+   --g-error         : Error, delete, disconnect
+   
+   PIXEL FRAME
+   --g-bevel-light   : Highlight edge of pixel-frame bevel
+   --g-bevel-dark    : Shadow edge of pixel-frame bevel
+   
+   ========================================================== */
+
+
+/* ========== THEME: Famicom (DEFAULT) ========== */
+
+/*
+ * Tailwind v4 @theme block: --color-* namespace is required by Tailwind v4
+ * to auto-generate color utility classes (bg-*, text-*, border-*).
+ * These alias to the runtime --g-* variables defined in the theme rules below.
+ *
+ * Legacy utility names preserved for backward compatibility:
+ *   --color-accent   → bg-accent, text-accent     (maps to --g-primary)
+ *   --color-accent-dark → bg-accent-dark           (maps to --g-primary-hover)
+ *   --color-secondary → bg-secondary, text-secondary (maps to --g-accent)
+ *   --color-muted    → text-muted                  (maps to --g-text-muted)
+ */
+@theme {
+  /* Surfaces */
+  --color-bg: var(--g-bg);
+  --color-surface: var(--g-surface);
+  --color-surface-alt: var(--g-surface-alt);
+
+  /* Text */
+  --color-text: var(--g-text);
+  --color-muted: var(--g-text-muted);
+
+  /* Borders */
+  --color-border: var(--g-border);
+  --color-border-strong: var(--g-border-strong);
+
+  /* Interactive — legacy names (accent = primary action color) */
+  --color-accent: var(--g-primary);
+  --color-accent-dark: var(--g-primary-hover);
+
+  /* Interactive — new semantic names */
+  --color-primary: var(--g-primary);
+  --color-primary-hover: var(--g-primary-hover);
+  --color-primary-text: var(--g-primary-text);
+
+  /* Accent — legacy name (secondary = personality color) */
+  --color-secondary: var(--g-accent);
+
+  /* Accent — new semantic names */
+  --color-accent-text: var(--g-accent-text);
+
+  /* Semantic status */
+  --color-success: var(--g-success);
+  --color-warning: var(--g-warning);
+  --color-error: var(--g-error);
+
+  /* Pixel frame bevel */
+  --color-bevel-light: var(--g-bevel-light);
+  --color-bevel-dark: var(--g-bevel-dark);
+}
+
+:root.theme-famicom {
+  --g-bg: #dcd1c0;
+  --g-surface: #e8e0d2;
+  --g-surface-alt: #f0ead8;
+  --g-text: #1c1c1c;
+  --g-text-muted: #5e5850;
+  --g-border: #a79a89;
+  --g-border-strong: #8a7d6c;
+  --g-primary: #a71c1c;
+  --g-primary-hover: #8b1616;
+  --g-primary-text: #fff1e8;
+  --g-accent: #c45a30;
+  --g-accent-text: #fff1e8;
+  --g-success: #597d3c;
+  --g-warning: #b37b2d;
+  --g-error: #c44141;
+  --g-bevel-light: #f0eae0;
+  --g-bevel-dark: #a0978a;
+}
+
+:root.theme-famicom.dark {
+  --g-bg: #1a1612;
+  --g-surface: #2c2621;
+  --g-surface-alt: #362e28;
+  --g-text: #e8e0d2;
+  --g-text-muted: #9a9088;
+  --g-border: #443c34;
+  --g-border-strong: #5a504a;
+  --g-primary: #e85040;
+  --g-primary-hover: #ff6858;
+  --g-primary-text: #1a1612;
+  --g-accent: #d4784a;
+  --g-accent-text: #1a1612;
+  --g-success: #88aa66;
+  --g-warning: #cc9055;
+  --g-error: #e06060;
+  --g-bevel-light: #3a322c;
+  --g-bevel-dark: #0a0806;
+}
+
+
+/* ========== THEME: Blood Moon ========== */
+:root.theme-bloodmoon {
+  --g-bg: #eedde4;
+  --g-surface: #f5eaef;
+  --g-surface-alt: #faf3f6;
+  --g-text: #2a0f1e;
+  --g-text-muted: #7a5568;
+  --g-border: #c4a0b0;
+  --g-border-strong: #9a7080;
+  --g-primary: #cc1840;
+  --g-primary-hover: #a01030;
+  --g-primary-text: #fff0f4;
+  --g-accent: #8b2060;
+  --g-accent-text: #fff0f4;
+  --g-success: #6a7a48;
+  --g-warning: #b07830;
+  --g-error: #cc1840;
+  --g-bevel-light: #f8f0f4;
+  --g-bevel-dark: #c0a8b2;
+}
+
+:root.theme-bloodmoon.dark {
+  --g-bg: #1a0a14;
+  --g-surface: #2a1220;
+  --g-surface-alt: #361828;
+  --g-text: #f0d0dd;
+  --g-text-muted: #9a6a80;
+  --g-border: #4a2038;
+  --g-border-strong: #6a3050;
+  --g-primary: #e83058;
+  --g-primary-hover: #ff4870;
+  --g-primary-text: #1a0a14;
+  --g-accent: #c44088;
+  --g-accent-text: #1a0a14;
+  --g-success: #88a060;
+  --g-warning: #cc8844;
+  --g-error: #e83058;
+  --g-bevel-light: #301828;
+  --g-bevel-dark: #0a0408;
+}
+
+
+/* ========== THEME: Adventure ========== */
+:root,
+:root.theme-adventure {
+  --g-bg: #f0e4c8;
+  --g-surface: #f8f0d8;
+  --g-surface-alt: #fdf8e8;
+  --g-text: #29012a;
+  --g-text-muted: #5e4450;
+  --g-border: #1c6256;
+  --g-border-strong: #144d44;
+  --g-primary: #1c6256;
+  --g-primary-hover: #0e4a3e;
+  --g-primary-text: #f0e4c8;
+  --g-accent: #8b305a;
+  --g-accent-text: #fdf8e8;
+  --g-success: #1c6256;
+  --g-warning: #c49830;
+  --g-error: #8b305a;
+  --g-bevel-light: #faf4e0;
+  --g-bevel-dark: #d0c098;
+}
+
+:root.dark,
+:root.theme-adventure.dark {
+  --g-bg: #29012a;
+  --g-surface: #3d1540;
+  --g-surface-alt: #4a1e4c;
+  --g-text: #f0e0b0;
+  --g-text-muted: #a088a0;
+  --g-border: #1c6256;
+  --g-border-strong: #28806e;
+  --g-primary: #28806e;
+  --g-primary-hover: #30a088;
+  --g-primary-text: #29012a;
+  --g-accent: #d4a040;
+  --g-accent-text: #29012a;
+  --g-success: #28806e;
+  --g-warning: #d4a040;
+  --g-error: #c45070;
+  --g-bevel-light: #4d1d52;
+  --g-bevel-dark: #1a0118;
+}
+
+
+/* ========== THEME: Nord ========== */
+:root.theme-nord {
+  --g-bg: #eceff4;
+  --g-surface: #e5e9f0;
+  --g-surface-alt: #d8dee9;
+  --g-text: #2e3440;
+  --g-text-muted: #4c566a;
+  --g-border: #d8dee9;
+  --g-border-strong: #b8c4d4;
+  /* Darkened from nord10 #5e81ac (Aug 2026): the frost blue only reached
+     3.5:1 against its own primary-text, under the 4.5 contrast floor. */
+  --g-primary: #4f6d92;
+  --g-primary-hover: #445f83;
+  --g-primary-text: #eceff4;
+  --g-accent: #88c0d0;
+  --g-accent-text: #2e3440;
+  --g-success: #a3be8c;
+  --g-warning: #ebcb8b;
+  --g-error: #bf616a;
+  --g-bevel-light: #f5f7fa;
+  --g-bevel-dark: #d0d6de;
+}
+
+:root.theme-nord.dark {
+  --g-bg: #2e3440;
+  --g-surface: #3b4252;
+  --g-surface-alt: #434c5e;
+  --g-text: #eceff4;
+  --g-text-muted: #a0aec0;
+  --g-border: #434c5e;
+  --g-border-strong: #5a6478;
+  /* Lightened (Aug 2026) for the 4.5:1 floor against primary-text. */
+  --g-primary: #7ba4c8;
+  --g-primary-hover: #8fb6d8;
+  --g-primary-text: #2e3440;
+  --g-accent: #88c0d0;
+  --g-accent-text: #2e3440;
+  --g-success: #a3be8c;
+  --g-warning: #ebcb8b;
+  --g-error: #bf616a;
+  --g-bevel-light: #434c5e;
+  --g-bevel-dark: #1e2127;
+}
+
+
+/* ========== THEME: Retro-Wave ========== */
+:root.theme-retrowave {
+  --g-bg: #f5ddd8;
+  --g-surface: #fae8e4;
+  --g-surface-alt: #fdf0ee;
+  --g-text: #1a1030;
+  --g-text-muted: #6a4a68;
+  --g-border: #c4a0b8;
+  --g-border-strong: #8a5880;
+  --g-primary: #b03090;
+  --g-primary-hover: #8a2070;
+  --g-primary-text: #fdf0ee;
+  --g-accent: #4a2480;
+  --g-accent-text: #fdf0ee;
+  --g-success: #5a8a50;
+  --g-warning: #c07830;
+  --g-error: #c43060;
+  --g-bevel-light: #fce8e4;
+  --g-bevel-dark: #d0b0b0;
+}
+
+:root.theme-retrowave.dark {
+  /* Lifted off black (Aug 2026): at #0a0820 the buttons' black outlines
+     vanished into the page. Still deep violet, just far enough up that the
+     chrome reads. */
+  --g-bg: #241a52;
+  --g-surface: #322466;
+  --g-surface-alt: #3e2c7a;
+  --g-text: #f0c8c0;
+  --g-text-muted: #a888a8;
+  --g-border: #4a2c78;
+  --g-border-strong: #6a40a0;
+  --g-primary: #d040a0;
+  --g-primary-hover: #e860b8;
+  --g-primary-text: #180f38;
+  --g-accent: #6a40c0;
+  --g-accent-text: #f0c8c0;
+  --g-success: #70a860;
+  --g-warning: #d09040;
+  --g-error: #e04070;
+  --g-bevel-light: #453484;
+  --g-bevel-dark: #140c30;
+}
+
+
+/* ========== THEME: Retro PC ========== */
+:root.theme-retropc {
+  --g-bg: #ddd4c0;
+  --g-surface: #ede4d0;
+  --g-surface-alt: #f4eed8;
+  --g-text: #202020;
+  --g-text-muted: #5a5548;
+  --g-border: #b0a490;
+  --g-border-strong: #8a7e68;
+  --g-primary: #506b81;
+  --g-primary-hover: #3e5568;
+  --g-primary-text: #f4eed8;
+  --g-accent: #8f6840;
+  --g-accent-text: #f4eed8;
+  --g-success: #6a8050;
+  --g-warning: #b08040;
+  --g-error: #a05050;
+  --g-bevel-light: #f0e8d8;
+  --g-bevel-dark: #a09480;
+}
+
+:root.theme-retropc.dark {
+  --g-bg: #2a2520;
+  --g-surface: #3a3428;
+  --g-surface-alt: #443c30;
+  --g-text: #e8dcc6;
+  --g-text-muted: #a09880;
+  --g-border: #504838;
+  --g-border-strong: #686050;
+  --g-primary: #6a90b0;
+  --g-primary-hover: #80a8c8;
+  --g-primary-text: #2a2520;
+  --g-accent: #b08050;
+  --g-accent-text: #2a2520;
+  --g-success: #88a068;
+  --g-warning: #c89858;
+  --g-error: #b86868;
+  --g-bevel-light: #4a4238;
+  --g-bevel-dark: #1a1610;
+}
+
+
+/* ========== THEME: Game Boy ========== */
+:root.theme-gameboy {
+  --g-bg: #d0e0b0;
+  --g-surface: #b8cc98;
+  --g-surface-alt: #c4d8a0;
+  --g-text: #1a2a10;
+  --g-text-muted: #3a5028;
+  --g-border: #6a8a50;
+  --g-border-strong: #4a6838;
+  --g-primary: #2a5020;
+  --g-primary-hover: #1e3c16;
+  --g-primary-text: #d0e0b0;
+  --g-accent: #4a7838;
+  --g-accent-text: #d0e0b0;
+  --g-success: #2a6020;
+  --g-warning: #6a7828;
+  --g-error: #5a3020;
+  --g-bevel-light: #d8e8b8;
+  --g-bevel-dark: #8aa068;
+}
+
+:root.theme-gameboy.dark {
+  --g-bg: #0a1808;
+  --g-surface: #142810;
+  --g-surface-alt: #1e3818;
+  --g-text: #a0c880;
+  --g-text-muted: #608850;
+  --g-border: #2a4820;
+  --g-border-strong: #3a5830;
+  --g-primary: #60a848;
+  --g-primary-hover: #78c060;
+  --g-primary-text: #0a1808;
+  --g-accent: #80b860;
+  --g-accent-text: #0a1808;
+  --g-success: #50a838;
+  --g-warning: #90a838;
+  --g-error: #a86838;
+  --g-bevel-light: #203820;
+  --g-bevel-dark: #040c04;
+}
+
+
+/* ========== THEME: Commodore ========== */
+:root.theme-commodore {
+  --g-bg: #d8d0e0;
+  --g-surface: #e4dce8;
+  --g-surface-alt: #eee8f0;
+  --g-text: #1a1440;
+  --g-text-muted: #504a70;
+  --g-border: #a098c0;
+  --g-border-strong: #7870a0;
+  --g-primary: #4838a8;
+  --g-primary-hover: #382890;
+  --g-primary-text: #d0d0f0;
+  --g-accent: #a06830;
+  --g-accent-text: #f0e8e0;
+  --g-success: #58a038;
+  --g-warning: #b89030;
+  --g-error: #c04040;
+  --g-bevel-light: #ece4f0;
+  --g-bevel-dark: #b0a8c0;
+}
+
+:root.theme-commodore.dark {
+  --g-bg: #1a1450;
+  --g-surface: #282060;
+  --g-surface-alt: #302870;
+  --g-text: #b0b0f0;
+  --g-text-muted: #7070b0;
+  --g-border: #383080;
+  --g-border-strong: #4840a0;
+  --g-primary: #7070e0;
+  --g-primary-hover: #8888f0;
+  --g-primary-text: #1a1450;
+  --g-accent: #c88840;
+  --g-accent-text: #1a1450;
+  --g-success: #70c050;
+  --g-warning: #d0a040;
+  --g-error: #e06060;
+  --g-bevel-light: #302870;
+  --g-bevel-dark: #0a0830;
+}
+
+
+/* ========== THEME: Dungeon ========== */
+:root.theme-dungeon {
+  --g-bg: #d8d0c8;
+  --g-surface: #e2dcd4;
+  --g-surface-alt: #eae4dc;
+  --g-text: #1a1814;
+  --g-text-muted: #5a5448;
+  --g-border: #a89888;
+  --g-border-strong: #887868;
+  --g-primary: #a06028;
+  --g-primary-hover: #884e1e;
+  /* Brightened from #faf0e0 (Aug 2026) for the 4.5:1 floor on primary. */
+  --g-primary-text: #fffaf0;
+  --g-accent: #5a4878;
+  --g-accent-text: #e8e0f0;
+  --g-success: #5a7a40;
+  --g-warning: #b88030;
+  --g-error: #a83830;
+  --g-bevel-light: #e8e0d8;
+  --g-bevel-dark: #a09080;
+}
+
+:root.theme-dungeon.dark {
+  /* Lifted off black (Aug 2026): at #141210 the buttons' black outlines
+     vanished into the page. Still torch-lit stone, just readable. */
+  --g-bg: #2b241c;
+  --g-surface: #3a3126;
+  --g-surface-alt: #463a2c;
+  --g-text: #d8ccc0;
+  --g-text-muted: #9c8a76;
+  --g-border: #52452e;
+  --g-border-strong: #695839;
+  --g-primary: #d08838;
+  --g-primary-hover: #e0a050;
+  --g-primary-text: #1e1912;
+  --g-accent: #8868b0;
+  --g-accent-text: #1e1912;
+  --g-success: #78a050;
+  --g-warning: #d09840;
+  --g-error: #c85040;
+  --g-bevel-light: #4d4034;
+  --g-bevel-dark: #12100c;
+}
+
+
+/* ========== THEME: Ocean ========== */
+:root.theme-ocean {
+  --g-bg: #d8e8ec;
+  --g-surface: #e4f0f4;
+  --g-surface-alt: #ecf4f8;
+  --g-text: #0a2028;
+  --g-text-muted: #3a5860;
+  --g-border: #98c0cc;
+  --g-border-strong: #70a0b0;
+  --g-primary: #1a6888;
+  --g-primary-hover: #105070;
+  --g-primary-text: #e4f0f4;
+  --g-accent: #d06830;
+  --g-accent-text: #faf0e8;
+  --g-success: #408868;
+  --g-warning: #b08838;
+  --g-error: #c04848;
+  --g-bevel-light: #e8f0f4;
+  --g-bevel-dark: #a8c0c8;
+}
+
+:root.theme-ocean.dark {
+  --g-bg: #081820;
+  --g-surface: #102830;
+  --g-surface-alt: #183038;
+  --g-text: #c0dce4;
+  --g-text-muted: #6898a8;
+  --g-border: #203840;
+  --g-border-strong: #2a4850;
+  --g-primary: #3098b8;
+  --g-primary-hover: #40b0d0;
+  --g-primary-text: #081820;
+  --g-accent: #e08848;
+  --g-accent-text: #081820;
+  --g-success: #50a878;
+  --g-warning: #c09848;
+  --g-error: #d06060;
+  --g-bevel-light: #183038;
+  --g-bevel-dark: #040c10;
+}

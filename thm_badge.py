@@ -104,37 +104,44 @@ class Stats:
 # Fetching
 # ---------------------------------------------------------------------------
 
-def http_get(url: str, timeout: int = 20, attempts: int = 5) -> bytes:
-    """GET with exponential backoff. TryHackMe sits behind Cloudflare and
-    rate-limits per IP; GitHub's shared runner IPs trip it regularly, so a
-    single 429 is not a failure, just a wait."""
-    req = urllib.request.Request(url, headers={
-        "User-Agent": USER_AGENT,
+def http_get(url: str, timeout: int = 20, attempts: int = 4) -> bytes:
+    headers = {
         "Accept": "application/json, image/*;q=0.9, */*;q=0.8",
-        "Accept-Language": "en",
-    })
+        "Accept-Language": "en-GB,en;q=0.9",
+        "Referer": "https://tryhackme.com/",
+    }
+    try:
+        from curl_cffi import requests as cffi
+    except ImportError:
+        cffi = None
+        print("warning: curl_cffi not installed, using urllib (Cloudflare may reject its TLS fingerprint)", file=sys.stderr)
+
     delay = 5.0
+    last_body = ""
     for attempt in range(1, attempts + 1):
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read()
+            if cffi:
+                r = cffi.get(url, headers=headers, impersonate="chrome", timeout=timeout)
+                if r.status_code < 400:
+                    return r.content
+                code, last_body, hdrs = r.status_code, r.text[:300], dict(r.headers)
+            else:
+                req = urllib.request.Request(url, headers={**headers, "User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read()
         except urllib.error.HTTPError as exc:
-            if exc.code not in RETRY_STATUSES or attempt == attempts:
-                raise
-            retry_after = exc.headers.get("Retry-After")
-            wait = float(retry_after) if retry_after and retry_after.isdigit() else delay
-            wait += random.uniform(0, 3)
-            print(f"warning: HTTP {exc.code} from {url.split('?')[0]}, retry {attempt}/{attempts - 1} in {wait:.0f}s",
-                  file=sys.stderr)
-            time.sleep(wait)
-            delay = min(delay * 3, 120)
-        except (urllib.error.URLError, TimeoutError) as exc:
-            if attempt == attempts:
-                raise
-            print(f"warning: {exc}, retry {attempt}/{attempts - 1} in {delay:.0f}s", file=sys.stderr)
-            time.sleep(delay)
-            delay = min(delay * 3, 120)
-    raise RuntimeError("unreachable")
+            code, hdrs = exc.code, dict(exc.headers)
+            last_body = exc.read(300).decode("utf-8", "replace")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            code, hdrs = 0, {}
+            last_body = str(exc)
+        if code not in RETRY_STATUSES or attempt == attempts:
+            cf = {k: v for k, v in hdrs.items() if k.lower() in ("cf-mitigated", "cf-ray", "server", "retry-after")}
+            raise RuntimeError(f"HTTP {code} from {url.split('?')[0]} after {attempt} attempts; {cf}; body: {last_body!r}")
+        wait = delay + random.uniform(0, 3)
+        print(f"warning: HTTP {code}, retry {attempt}/{attempts - 1} in {wait:.0f}s", file=sys.stderr)
+        time.sleep(wait)
+        delay = min(delay * 3, 120)
 
 
 def fetch_stats(username: str) -> dict:

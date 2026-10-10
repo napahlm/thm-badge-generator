@@ -44,9 +44,9 @@ runs:
       with:
         python-version: "3.12"
 
-    - name: Install Pillow
+    - name: Install dependencies
       shell: bash
-      run: pip install --quiet pillow
+      run: pip install --quiet pillow curl_cffi
 
     - name: Render badge
       shell: bash

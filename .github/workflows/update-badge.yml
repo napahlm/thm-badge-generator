@@ -2,8 +2,7 @@ name: Update TryHackMe badge
 
 on:
   schedule:
-    # 00:23 UTC daily, shortly after the TryHackMe streak day rolls over.
-    - cron: "23 0 * * *"
+    - cron: "41 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,42 +13,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  render:
+  badge:
     runs-on: ubuntu-latest
-    env:
-      # Set these as repository variables (Settings -> Secrets and variables -> Actions -> Variables).
-      THM_USERNAME: ${{ vars.THM_USERNAME }}
-      THM_THEME: ${{ vars.THM_THEME || 'adventure' }}
-      THM_MODE: ${{ vars.THM_MODE || 'both' }}
-      THM_SCALE: ${{ vars.THM_SCALE || '2' }}
-      THM_ANIMATE: ${{ vars.THM_ANIMATE || 'true' }}
-      THM_EXTRA_ARGS: ${{ vars.THM_EXTRA_ARGS }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: ./
         with:
-          python-version: "3.12"
-
-      - name: Install Pillow
-        run: pip install --quiet pillow
-
-      - name: Render badge
-        run: |
-          test -n "$THM_USERNAME" || { echo "::error::Set the THM_USERNAME repository variable"; exit 1; }
-          ANIM=""; [ "$THM_ANIMATE" = "true" ] && ANIM="--animate"
-          python thm_badge.py --username "$THM_USERNAME" \
-            --theme "$THM_THEME" --mode "$THM_MODE" --scale "$THM_SCALE" \
-            --out badges $ANIM $THM_EXTRA_ARGS
-
-      - name: Commit if changed
-        run: |
-          git config user.name "thm-badge-bot"
-          git config user.email "thm-badge-bot@users.noreply.github.com"
-          git add badges
-          if git diff --cached --quiet; then
-            echo "Badge unchanged, nothing to commit."
-          else
-            git commit -m "update(badge): tryhackme stats $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          username: napahlm
+          theme: adventure

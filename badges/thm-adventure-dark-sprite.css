@@ -4,7 +4,7 @@
   display: block;
   width: 644px;
   height: 106px;
-  background: url("thm-adventure-dark-sprite.png") 0 0 / 12880px 106px no-repeat;
+  background: url("https://raw.githubusercontent.com/napahlm/thm-badge-generator/main/badges/thm-adventure-dark-sprite.png") 0 0 / 12880px 106px no-repeat;
   image-rendering: pixelated;
   animation: thm-badge-loop 1000ms steps(20) infinite;
 }

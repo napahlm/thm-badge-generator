@@ -1,1 +1,35 @@
-{"avatar":"https://cdn-images.tryhackme.com/user-avatars/672c998fcdacbdaa04700118-1731666715265","username":"napahlm","level":13,"country":"no","totalPoints":33010,"badgesNumber":42,"completedRoomsNumber":329,"streak":675,"largestStreak":675,"rank":11958,"topPercentage":1,"isInTopTenPercent":true,"badgeImageURL":"https://tryhackme-badges.s3.amazonaws.com/napahlm.png","userRole":"professional","leagueTier":"gold","capabilityScore":{"value":61.49,"pov":"red"},"isPrivateProfile":false,"dateSignUp":"2024-11-07T10:42:23.624Z"}
+{
+  "avatar": "https://cdn-images.tryhackme.com/user-avatars/672c998fcdacbdaa04700118-1731666715265",
+  "username": "napahlm",
+  "level": 13,
+  "country": "no",
+  "about": "",
+  "profileBanner": "default",
+  "shouldShowCrown": true,
+  "linkedInUsername": "",
+  "githubUsername": "napahlm",
+  "twitterUsername": "",
+  "instagramUsername": "",
+  "personalWebsite": "",
+  "redditUsername": "",
+  "discordUsername": "",
+  "calendlyUrl": "",
+  "totalPoints": 33010,
+  "displayedCertificateTypes": [],
+  "badgesNumber": 42,
+  "completedRoomsNumber": 329,
+  "streak": 676,
+  "largestStreak": 676,
+  "rank": 11963,
+  "topPercentage": 1,
+  "isInTopTenPercent": true,
+  "badgeImageURL": "https://tryhackme-badges.s3.amazonaws.com/napahlm.png",
+  "userRole": "professional",
+  "leagueTier": "gold",
+  "capabilityScore": {
+    "value": 61.49,
+    "pov": "red"
+  },
+  "isPrivateProfile": false,
+  "dateSignUp": "2024-11-07T10:42:23.624Z"
+}
